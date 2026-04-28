@@ -4,31 +4,29 @@ import joblib
 import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from imblearn.over_sampling import SMOTE
+from sklearn.metrics import classification_report, accuracy_score
 
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model.joblib")
 
 
 def train(X, y, model_path=MODEL_PATH):
-    """Train a RandomForest classifier with SMOTE for class imbalance."""
+    """Train RandomForest classifier."""
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
-
-    # Handle class imbalance with SMOTE
-    smote = SMOTE(random_state=42)
-    X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
-
-    # Train model
-    clf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
-    clf.fit(X_train_res, y_train_res)
-
-    # Save model
+    clf = RandomForestClassifier(
+        n_estimators=1000,
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        max_features="sqrt",
+        bootstrap=True,
+        random_state=42,
+        n_jobs=-1
+    )
+    clf.fit(X_train, y_train)
     joblib.dump(clf, model_path)
-
-    # Evaluate
     metrics = evaluate(clf, X_test, y_test)
     return clf, metrics
 
@@ -46,16 +44,18 @@ def predict(clf, X):
 
 
 def evaluate(clf, X_test, y_test):
-    """Evaluate model and return precision, recall, F1 per class."""
+    """Evaluate model — precision, recall, F1 per class."""
     y_pred = clf.predict(X_test)
     report = classification_report(
-        y_test, y_pred, target_names=["show", "no_show"], output_dict=True
+        y_test, y_pred,
+        target_names=["show", "no_show"],
+        output_dict=True
     )
     return report
 
 
 def get_recommendation(risk_level):
-    """Return a recommendation based on risk level."""
+    """Return recommendation based on risk level."""
     if risk_level == "HIGH":
         return (
             "Send reminder SMS and call patient 24h before appointment."

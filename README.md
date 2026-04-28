@@ -1,4 +1,4 @@
-# NoShowIQ ??
+# NoShowIQ 
 
 > A prediction API that tells clinics which patients are likely to skip their appointment.
 
