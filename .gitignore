@@ -29,7 +29,6 @@ models/
 
 # Model files
 model.joblib
-noshow_iq/model.joblib
 
 # IDE
 .vscode/
