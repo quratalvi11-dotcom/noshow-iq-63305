@@ -1,6 +1,53 @@
+# Environment variables — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ML artifacts
+*.pkl
+*.joblib
+models/
+
 # Model files
 model.joblib
 noshow_iq/model.joblib
 
-# Training script
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# MongoDB data
+mongo-data/
+
+# Dataset
+data/
+
+# Training script output
 train.py
