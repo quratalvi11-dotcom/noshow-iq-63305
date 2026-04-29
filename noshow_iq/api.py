@@ -89,3 +89,12 @@ def stats():
     if result:
         result[0].pop("_id", None)
     return result[0] if result else {}
+
+
+@app.get("/")
+def root():
+    return {
+        "name": "NoShowIQ",
+        "version": "1.0.0",
+        "endpoints": ["/health", "/predict", "/history", "/stats"]
+    }
