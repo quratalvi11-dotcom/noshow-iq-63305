@@ -3,10 +3,12 @@ import requests
 
 URL = sys.argv[1] if len(sys.argv) > 1 else "https://Qurat-09-noshow-iq.hf.space"
 
+
 def test_health():
     r = requests.get(f"{URL}/health")
     assert r.status_code == 200
     print("PASS /health")
+
 
 def test_predict():
     r = requests.post(f"{URL}/predict", json={
@@ -19,10 +21,12 @@ def test_predict():
     assert r.status_code == 200
     print("PASS /predict")
 
+
 def test_stats():
     r = requests.get(f"{URL}/stats")
     assert r.status_code == 200
     print("PASS /stats")
+
 
 test_health()
 test_predict()
