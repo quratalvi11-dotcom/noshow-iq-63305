@@ -1,15 +1,11 @@
-version: "3.8"
-
 services:
   app:
     build: .
     ports:
       - "8000:8000"
     environment:
-      - MONGO_URI=mongodb://admin:password@mongodb:27017/noshowiq?authSource=admin
-    depends_on:
-      - mongodb
-    restart: unless-stopped
+      - MONGO_URI=mongodb+srv://quratalvi11_db_user:Qurat12345@cluster0.rssaw1j.mongodb.net/noshow_db?appName=Cluster0
+    restart: no
 
   mongodb:
     image: mongo:7
@@ -20,7 +16,7 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=password
     volumes:
       - mongo-data:/data/db
-    restart: unless-stopped
+    restart: no
 
   mongo-express:
     image: mongo-express
@@ -33,7 +29,7 @@ services:
       - ME_CONFIG_BASICAUTH=false
     depends_on:
       - mongodb
-    restart: unless-stopped
+    restart: no
 
 volumes:
   mongo-data:
