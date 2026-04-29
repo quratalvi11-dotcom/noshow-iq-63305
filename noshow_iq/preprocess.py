@@ -1,5 +1,4 @@
 """Data preprocessing module for NoShowIQ."""
-
 import pandas as pd
 
 
@@ -11,18 +10,26 @@ def load_data(filepath):
 
 def clean_data(df):
     """Clean and preprocess the raw appointment data."""
-    df = df.rename(columns={
-        "No-show": "no_show",
-        "Hipertension": "hypertension",
-        "Handcap": "handicap"
-    })
+    df = df.copy()
 
+    # Rename columns
+    df.columns = [col.strip() for col in df.columns]
+    rename_map = {}
+    for col in df.columns:
+        if col.lower() == "no-show":
+            rename_map[col] = "no_show"
+        elif col.lower() == "hipertension":
+            rename_map[col] = "hipertension"
+        elif col.lower() == "handcap":
+            rename_map[col] = "handcap"
+    df = df.rename(columns=rename_map)
     df.columns = [col.strip().lower() for col in df.columns]
 
-    # Drop invalid ages
+    # Fix age
     df = df[df["age"] >= 0].copy()
     df = df[df["age"] <= 100].copy()
 
+    # Parse dates
     df["scheduledday"] = pd.to_datetime(df["scheduledday"], utc=True)
     df["appointmentday"] = pd.to_datetime(df["appointmentday"], utc=True)
 
@@ -32,51 +39,28 @@ def clean_data(df):
         - df["scheduledday"].dt.normalize()
     ).dt.days.clip(lower=0)
 
-    # Feature 2: appointment_hour
-    df["appointment_hour"] = df["scheduledday"].dt.hour
+    # Feature 2: appointment_weekday
+    df["appointment_weekday"] = df["appointmentday"].dt.dayofweek
 
-    # Feature 3: day of week
-    df["appointment_dayofweek"] = df["appointmentday"].dt.dayofweek
+    # Handle no_show only if present (training mode)
+    if "no_show" in df.columns:
+        df["no_show_binary"] = df["no_show"].map({"No": 0, "Yes": 1})
+    else:
+        df["no_show_binary"] = 0
 
-    # Feature 4: month
-    df["appointment_month"] = df["appointmentday"].dt.month
-
-    # Feature 5: is weekend
-    df["is_weekend"] = (
-        df["appointment_dayofweek"] >= 5
-    ).astype(int)
-
-    # Feature 6: same day booking
-    df["same_day"] = (df["days_in_advance"] == 0).astype(int)
-
-    # Feature 7: neighbourhood risk — encode target first
-    df["no_show_binary"] = df["no_show"].map({"No": 0, "Yes": 1})
-    df["neighbourhood_risk"] = df.groupby(
-        "neighbourhood"
-    )["no_show_binary"].transform("mean")
-
-    # Feature 8: total conditions
-    df["total_conditions"] = (
-        df["hypertension"] + df["diabetes"] + df["alcoholism"]
-    )
-
-    df["gender"] = df["gender"].map({"F": 0, "M": 1})
-    df["no_show"] = df["no_show_binary"]
-
-    df = df.drop(
-        columns=[
-            "patientid", "appointmentid",
-            "neighbourhood", "scheduledday",
-            "appointmentday", "no_show_binary"
-        ]
-    )
-
+    # Drop unnecessary columns
+    cols_to_drop = [c for c in [
+        "patientid", "appointmentid", "neighbourhood",
+        "scheduledday", "appointmentday",
+        "no_show", "no-show", "gender"
+    ] if c in df.columns]
+    df = df.drop(columns=cols_to_drop)
     df = df.dropna()
     return df
 
 
 def get_features_and_target(df):
     """Split dataframe into features X and target y."""
-    X = df.drop(columns=["no_show"])
-    y = df["no_show"]
+    y = df["no_show_binary"]
+    X = df.drop(columns=["no_show_binary"])
     return X, y

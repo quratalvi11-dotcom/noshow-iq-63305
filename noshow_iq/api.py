@@ -1,16 +1,15 @@
+"""FastAPI application for NoShowIQ."""
 from fastapi import FastAPI
 from pydantic import BaseModel
 from datetime import datetime
 import pandas as pd
 from pymongo import MongoClient
 import os
-
 from noshow_iq.model import load_model
 from noshow_iq.preprocess import clean_data
 
 app = FastAPI()
 
-# MongoDB
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(MONGO_URI)
 db = client["noshow_db"]
@@ -40,19 +39,15 @@ def health():
 def predict_api(data: Appointment):
     df = pd.DataFrame([data.dict()])
     df = clean_data(df)
-
     features = df[[
         "age", "scholarship", "hipertension", "diabetes",
         "alcoholism", "handcap", "sms_received",
         "days_in_advance", "appointment_weekday"
     ]]
-
     pred = model.predict(features)[0]
     prob = model.predict_proba(features)[0][1]
-
     risk = "High" if pred == 1 else "Low"
     recommendation = "Send reminder" if pred == 1 else "No action"
-
     record = {
         "timestamp": datetime.utcnow(),
         "input": data.dict(),
@@ -60,9 +55,8 @@ def predict_api(data: Appointment):
         "probability": float(prob),
         "recommendation": recommendation
     }
-
-    pred_collection.insert_one(record)
-
+    result = pred_collection.insert_one(record)
+    record["_id"] = str(result.inserted_id)
     return record
 
 
@@ -91,6 +85,7 @@ def stats():
             }
         }
     ]
-
     result = list(pred_collection.aggregate(pipeline))
+    if result:
+        result[0].pop("_id", None)
     return result[0] if result else {}
